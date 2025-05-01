@@ -86,12 +86,16 @@ const ZHBranchMapping = () => {
       
       try {
         setIsLoading(true);
+        console.log("Fetching branch mapping data...");
         
         // Fetch branches and BH users in parallel
         const [branchesData, bhUsersData] = await Promise.all([
           fetchZoneBranches(user.id),
           fetchZoneBHRs(user.id)
         ]);
+        
+        console.log("Branches fetched:", branchesData.length);
+        console.log("BHRs fetched:", bhUsersData.length);
         
         setBranches(branchesData);
         setFilteredBranches(branchesData);
@@ -205,7 +209,7 @@ const ZHBranchMapping = () => {
   }
   
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-1">Branch Mapping</h1>
         <p className="text-slate-600">Assign branches to Branch Head Representatives (BHRs)</p>
@@ -235,7 +239,7 @@ const ZHBranchMapping = () => {
               <SelectTrigger className="w-full md:w-52">
                 <SelectValue placeholder="Filter by Category" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="platinum">Platinum</SelectItem>
                 <SelectItem value="diamond">Diamond</SelectItem>
@@ -246,7 +250,7 @@ const ZHBranchMapping = () => {
             </Select>
           </div>
           
-          <div className="border rounded-md overflow-hidden">
+          <div className="border rounded-md overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -305,7 +309,7 @@ const ZHBranchMapping = () => {
       
       {/* Dialogs for assigning/unassigning */}
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md bg-white">
           {dialogType === "assign" ? (
             <>
               <AlertDialogHeader>
@@ -319,12 +323,18 @@ const ZHBranchMapping = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select a BHR" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {bhUsers.map((bhUser) => (
-                      <SelectItem key={bhUser.id} value={bhUser.id}>
-                        {bhUser.full_name} ({bhUser.e_code})
-                      </SelectItem>
-                    ))}
+                  <SelectContent className="bg-white z-50">
+                    {bhUsers.length === 0 ? (
+                      <div className="p-2 text-sm text-slate-500">
+                        No BHRs available. Please add BHRs first.
+                      </div>
+                    ) : (
+                      bhUsers.map((bhUser) => (
+                        <SelectItem key={bhUser.id} value={bhUser.id}>
+                          {bhUser.full_name} ({bhUser.e_code})
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

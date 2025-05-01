@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import BHRDetailsModal from "@/components/zh/BHRDetailsModal";
+import { toast } from "@/components/ui/use-toast";
 
 interface BHRUser {
   id: string;
@@ -32,33 +33,41 @@ const ZHBHRManagement = () => {
     queryKey: ['zh-bhrs-management'],
     queryFn: async () => {
       try {
-        // First, get the ZH profile to identify their location
-        const { data: zhProfile, error: zhError } = await supabase
-          .from('profiles')
-          .select('location')
-          .eq('id', user?.id || '')
-          .single();
-        
-        if (zhError) throw zhError;
-        
-        // Get all BH users in this zone/location
+        console.log("Fetching BHR users");
+        // Get all BH users without location filtering
         const { data: bhUsers, error: bhError } = await supabase
           .from('profiles')
           .select('id, full_name, e_code, location')
-          .eq('role', 'BH')
-          .eq('location', zhProfile?.location || '');
+          .eq('role', 'BH');
         
-        if (bhError) throw bhError;
+        if (bhError) {
+          console.error("Error fetching BH users:", bhError);
+          toast({
+            variant: "destructive",
+            title: "Failed to fetch BHR users",
+            description: bhError.message || "An error occurred"
+          });
+          throw bhError;
+        }
+
+        console.log("BH users fetched:", bhUsers?.length || 0);
+        
+        if (!bhUsers || bhUsers.length === 0) {
+          return [];
+        }
         
         // Get branch assignments for these users
-        const bhrIds = (bhUsers || []).map(user => user.id);
+        const bhrIds = bhUsers.map(user => user.id);
         
         const { data: assignments, error: assignmentError } = await supabase
           .from('branch_assignments')
           .select('user_id, branch_id')
           .in('user_id', bhrIds);
           
-        if (assignmentError) throw assignmentError;
+        if (assignmentError) {
+          console.error("Error fetching assignments:", assignmentError);
+          throw assignmentError;
+        }
         
         // Get branch visits for these users
         const { data: visits, error: visitError } = await supabase
@@ -66,7 +75,10 @@ const ZHBHRManagement = () => {
           .select('user_id, branch_id, status')
           .in('user_id', bhrIds);
           
-        if (visitError) throw visitError;
+        if (visitError) {
+          console.error("Error fetching visits:", visitError);
+          throw visitError;
+        }
         
         // Group assignments by user
         const assignmentsByUser: Record<string, string[]> = {};
@@ -89,7 +101,7 @@ const ZHBHRManagement = () => {
         });
         
         // Combine the data
-        const bhrUsers: BHRUser[] = (bhUsers || []).map(bhr => {
+        const bhrUsers: BHRUser[] = bhUsers.map(bhr => {
           const branches = assignmentsByUser[bhr.id] || [];
           const visitsCompleted = visitsByUser[bhr.id] || [];
           
@@ -109,6 +121,7 @@ const ZHBHRManagement = () => {
           };
         });
         
+        console.log("Processed BHR users:", bhrUsers.length);
         return bhrUsers;
       } catch (error) {
         console.error("Error fetching BHR users:", error);
@@ -155,10 +168,10 @@ const ZHBHRManagement = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">BHR Management</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">BHR Management</h1>
         <p className="text-slate-600 mt-1">Monitor and manage Branch HR representatives</p>
       </div>
 
@@ -167,7 +180,7 @@ const ZHBHRManagement = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
           <Input
-            placeholder="Search by name, email, or ID..."
+            placeholder="Search by name or ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -176,9 +189,9 @@ const ZHBHRManagement = () => {
         
         <Select value={locationFilter} onValueChange={setLocationFilter}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select location" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             {locations.map(location => (
               <SelectItem key={location} value={location}>{location}</SelectItem>
             ))}
@@ -187,9 +200,9 @@ const ZHBHRManagement = () => {
         
         <Select defaultValue="All Channels">
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select channel" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-white">
             <SelectItem value="All Channels">All Channels</SelectItem>
             <SelectItem value="Corporate">Corporate Banking</SelectItem>
             <SelectItem value="SME">SME Banking</SelectItem>
@@ -199,7 +212,7 @@ const ZHBHRManagement = () => {
       </div>
 
       {/* BHR Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {isLoading ? (
           Array(3).fill(0).map((_, index) => (
             <Card key={index} className="animate-pulse">
@@ -230,27 +243,27 @@ const ZHBHRManagement = () => {
               
             return (
               <Card key={bhr.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
+                <CardContent className="p-4 md:p-6">
                   <div className="flex items-start gap-4">
-                    <div className="h-14 w-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
+                    <div className="h-10 md:h-14 w-10 md:w-14 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-lg md:text-xl font-bold flex-shrink-0">
                       {initials}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-lg">{bhr.full_name}</h3>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start flex-wrap gap-2">
+                        <h3 className="font-semibold text-base md:text-lg truncate">{bhr.full_name}</h3>
                         {getStatusBadge(bhr.status)}
                       </div>
-                      <div className="text-sm text-slate-500">{bhr.e_code}</div>
+                      <div className="text-xs md:text-sm text-slate-500">{bhr.e_code}</div>
                     </div>
                   </div>
                   
-                  <div className="mt-4 flex items-center text-sm text-slate-600">
-                    <MapPin className="h-4 w-4 mr-2" />
-                    {bhr.location}
+                  <div className="mt-4 flex items-center text-xs md:text-sm text-slate-600">
+                    <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                    <span className="truncate">{bhr.location}</span>
                   </div>
                   
                   <div className="mt-4">
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-xs md:text-sm mb-1">
                       <span>Branch Visit Coverage</span>
                       <span className="font-medium">
                         {bhr.visits_completed}/{bhr.branches_assigned} branches
@@ -265,11 +278,11 @@ const ZHBHRManagement = () => {
                   <div className="mt-6 grid grid-cols-2 gap-4">
                     <div className="text-center">
                       <div className="text-slate-500 text-xs mb-1">Branches Mapped</div>
-                      <div className="text-2xl font-bold">{bhr.branches_assigned}</div>
+                      <div className="text-xl md:text-2xl font-bold">{bhr.branches_assigned}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-slate-500 text-xs mb-1">Visits Completed</div>
-                      <div className="text-2xl font-bold">{bhr.visits_completed}</div>
+                      <div className="text-xl md:text-2xl font-bold">{bhr.visits_completed}</div>
                     </div>
                   </div>
                   

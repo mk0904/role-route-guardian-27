@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Database } from "@/integrations/supabase/types";
@@ -9,6 +8,7 @@ type BHRUser = Database['public']['Tables']['profiles']['Row'] & { branches_assi
 
 export async function fetchZoneBranches(userId: string): Promise<BranchWithAssignments[]> {
   try {
+    console.log("Fetching all branches...");
     // Get all branches without location filtering
     const { data: branches, error: branchError } = await supabase
       .from('branches')
@@ -19,7 +19,12 @@ export async function fetchZoneBranches(userId: string): Promise<BranchWithAssig
         )
       `);
 
-    if (branchError) throw branchError;
+    if (branchError) {
+      console.error("Error fetching branches:", branchError);
+      throw branchError;
+    }
+
+    console.log(`Fetched ${branches?.length || 0} branches`);
 
     // Process the data to count BHs per branch
     const processedBranches = branches.map(branch => {
@@ -49,19 +54,26 @@ export async function fetchZoneBranches(userId: string): Promise<BranchWithAssig
 
 export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
     try {
+      console.log("Fetching all BH users...");
       // Get all BH users without location filtering
       const { data: bhUsers, error: bhError } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'BH');
   
-      if (bhError) throw bhError;
+      if (bhError) {
+        console.error("Error fetching BH users:", bhError);
+        throw bhError;
+      }
+      
+      console.log(`Fetched ${bhUsers?.length || 0} BH users`);
       
       // Get branch assignments for these users in a separate query
       const bhUserIds = bhUsers.map(user => user.id);
       
       // Only proceed if we have users
       if (bhUserIds.length === 0) {
+        console.log("No BH users found");
         return [] as BHRUser[];
       }
       
@@ -70,7 +82,12 @@ export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
         .select('user_id, branch_id')
         .in('user_id', bhUserIds);
         
-      if (assignmentsError) throw assignmentsError;
+      if (assignmentsError) {
+        console.error("Error fetching assignments:", assignmentsError);
+        throw assignmentsError;
+      }
+      
+      console.log(`Fetched ${assignments?.length || 0} branch assignments`);
       
       // Group assignments by user
       const assignmentsByUser: Record<string, string[]> = {};
@@ -90,12 +107,13 @@ export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
         };
       });
   
+      console.log(`Processed ${processedBHRs.length} BHRs with assignment counts`);
       return processedBHRs as BHRUser[];
     } catch (error) {
       console.error("Error fetching zone BHRs:", error);
       throw error;
     }
-  }
+}
 
 export async function fetchDashboardStats(userId: string) {
   try {
