@@ -1,3 +1,4 @@
+
 export const fetchDashboardStats = async () => {
   try {
     // This would normally be a database call
@@ -116,6 +117,60 @@ export const fetchTopPerformers = async () => {
     ];
   } catch (error) {
     console.error("Error fetching top performers:", error);
+    throw error;
+  }
+};
+
+// Add the missing functions that CHReports.tsx is trying to import
+export const generateReportData = async (month: string, year: string) => {
+  try {
+    // This would normally be a database call
+    // For now we're returning mock data
+    return {
+      totalBranchVisits: 245,
+      coveragePercentage: 72,
+      avgParticipation: 85,
+      topPerformer: "Priya Sharma",
+    };
+  } catch (error) {
+    console.error("Error generating report data:", error);
+    throw error;
+  }
+};
+
+export const fetchCategoryBreakdown = async () => {
+  try {
+    // This would normally be a database call
+    // For now we're returning mock data
+    return [
+      {
+        name: "Platinum",
+        branches: 42,
+        coverage: 86,
+      },
+      {
+        name: "Diamond",
+        branches: 78,
+        coverage: 75,
+      },
+      {
+        name: "Gold",
+        branches: 126,
+        coverage: 68,
+      },
+      {
+        name: "Silver",
+        branches: 195,
+        coverage: 56,
+      },
+      {
+        name: "Bronze",
+        branches: 59,
+        coverage: 42,
+      },
+    ];
+  } catch (error) {
+    console.error("Error fetching category breakdown:", error);
     throw error;
   }
 };
