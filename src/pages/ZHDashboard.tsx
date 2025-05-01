@@ -192,19 +192,19 @@ const ZHDashboard = () => {
     }
   });
 
-  // Fetch branch and BHR stats from Supabase
+  // Fetch branch and BHR stats from Supabase - Modified to get all BHs regardless of location
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['zh-stats'],
     queryFn: async () => {
       try {
-        // Get total branches
+        // Get total branches - now getting all branches
         const { data: branches, error: branchesError } = await supabase
           .from('branches')
           .select('id', { count: 'exact' });
         
         if (branchesError) throw branchesError;
         
-        // Get total BHRs
+        // Get total BHRs - now getting all BH users regardless of location
         const { data: bhrs, error: bhrsError } = await supabase
           .from('profiles')
           .select('id', { count: 'exact' })
@@ -212,7 +212,7 @@ const ZHDashboard = () => {
         
         if (bhrsError) throw bhrsError;
         
-        // Get active BHRs (those with at least one branch visit in the last 30 days)
+        // Get active BHRs - now considering all visits
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         
@@ -227,10 +227,22 @@ const ZHDashboard = () => {
         // Count unique active BHRs - safely handle null data
         const uniqueActiveBhrs = new Set((activeBhrs || []).map(bhr => bhr.user_id));
         
+        // Count visited branches
+        const { data: visitedBranches, error: visitedBranchesError } = await supabase
+          .from('branch_visits')
+          .select('branch_id', { count: 'exact', head: true })
+          .eq('status', 'submitted');
+          
+        if (visitedBranchesError) throw visitedBranchesError;
+        
+        // Get unique visited branches
+        const uniqueVisitedBranches = new Set((visitedBranches || []).map(visit => visit.branch_id));
+        
         return {
           totalBranches: (branches || []).length,
           totalBHRs: (bhrs || []).length,
           activeBHRs: uniqueActiveBhrs.size,
+          visitedBranches: uniqueVisitedBranches.size,
         };
       } catch (error: any) {
         console.error("Error fetching stats:", error);
@@ -243,17 +255,18 @@ const ZHDashboard = () => {
           totalBranches: 0,
           totalBHRs: 0,
           activeBHRs: 0,
+          visitedBranches: 0,
         };
       }
     }
   });
 
-  // Fetch BHR report counts
+  // Fetch BHR report counts - modified to fetch all BHRs regardless of location
   const { data: bhrReportCounts, isLoading: bhrCountsLoading } = useQuery({
     queryKey: ['bhr-report-counts'],
     queryFn: async () => {
       try {
-        // Get report counts per BHR
+        // Get report counts per BHR - for all BHRs
         const { data, error } = await supabase
           .from('branch_visits')
           .select(`
@@ -309,7 +322,7 @@ const ZHDashboard = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-slate-500">Total BHRs</CardTitle>
@@ -336,6 +349,15 @@ const ZHDashboard = () => {
             <p className="text-3xl font-bold">{statsLoading ? "..." : stats?.totalBranches}</p>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">Visited Branches</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{statsLoading ? "..." : stats?.visitedBranches}</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content */}
@@ -354,36 +376,38 @@ const ZHDashboard = () => {
               ) : !visitReports || visitReports.length === 0 ? (
                 <ErrorFallback message="No reports found" />
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Branch</TableHead>
-                      <TableHead>BH Assigned</TableHead>
-                      <TableHead>Last Report</TableHead>
-                      <TableHead>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {visitReports.map((visit, i) => (
-                      <TableRow key={i}>
-                        <TableCell>{visit.branch.name}</TableCell>
-                        <TableCell>{visit.bh_name}</TableCell>
-                        <TableCell>{visit.visit_date}</TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedVisit(visit)}
-                            className="flex items-center gap-1"
-                          >
-                            View Report
-                            <ArrowRight className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>BH Assigned</TableHead>
+                        <TableHead>Last Report</TableHead>
+                        <TableHead>Action</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {visitReports.map((visit, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{visit.branch.name}</TableCell>
+                          <TableCell>{visit.bh_name}</TableCell>
+                          <TableCell>{visit.visit_date}</TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setSelectedVisit(visit)}
+                              className="flex items-center gap-1"
+                            >
+                              View Report
+                              <ArrowRight className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -391,7 +415,7 @@ const ZHDashboard = () => {
 
         {/* Right Column - BHR Performance Overview */}
         <div>
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>BHR Report Submissions</CardTitle>

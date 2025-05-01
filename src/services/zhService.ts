@@ -9,26 +9,15 @@ type BHRUser = Database['public']['Tables']['profiles']['Row'] & { branches_assi
 
 export async function fetchZoneBranches(userId: string): Promise<BranchWithAssignments[]> {
   try {
-    // First, get the ZH profile to identify their location
-    const { data: zhProfile, error: zhError } = await supabase
-      .from('profiles')
-      .select('location')
-      .eq('id', userId)
-      .single();
-
-    if (zhError) throw zhError;
-    if (!zhProfile) throw new Error('Zone Head profile not found');
-
-    // Get all branches in this zone/location
+    // Get all branches without location filtering
     const { data: branches, error: branchError } = await supabase
       .from('branches')
       .select(`
         *,
-        branch_assignments!inner (
+        branch_assignments (
           user_id
         )
-      `)
-      .eq('location', zhProfile.location);
+      `);
 
     if (branchError) throw branchError;
 
@@ -60,21 +49,10 @@ export async function fetchZoneBranches(userId: string): Promise<BranchWithAssig
 
 export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
     try {
-      // First, get the ZH profile to identify their location
-      const { data: zhProfile, error: zhError } = await supabase
-        .from('profiles')
-        .select('location')
-        .eq('id', userId)
-        .single();
-  
-      if (zhError) throw zhError;
-      if (!zhProfile) throw new Error('Zone Head profile not found');
-  
-      // Get all BH users in this zone/location
+      // Get all BH users without location filtering
       const { data: bhUsers, error: bhError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('location', zhProfile.location)
         .eq('role', 'BH');
   
       if (bhError) throw bhError;
@@ -121,43 +99,30 @@ export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
 
 export async function fetchDashboardStats(userId: string) {
   try {
-    // First, get the ZH profile to identify their location
-    const { data: zhProfile, error: zhError } = await supabase
-      .from('profiles')
-      .select('location')
-      .eq('id', userId)
-      .single();
-
-    if (zhError) throw zhError;
-    if (!zhProfile) throw new Error('Zone Head profile not found');
-
-    // Count total branches in the zone
+    // Count total branches without filtering by location
     const { count: totalBranches, error: branchError } = await supabase
       .from('branches')
-      .select('id', { count: 'exact', head: true })
-      .eq('location', zhProfile.location);
+      .select('id', { count: 'exact', head: true });
 
     if (branchError) throw branchError;
 
-    // Count total BHRs in the zone
+    // Count total BHRs without filtering by location
     const { count: totalBHRs, error: bhrError } = await supabase
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .eq('location', zhProfile.location)
       .eq('role', 'BH');
 
     if (bhrError) throw bhrError;
 
-    // Get visits stats
+    // Get visits stats without location filtering
     const { data: visits, error: visitsError } = await supabase
       .from('branch_visits')
       .select(`
         id,
         visit_date,
         status,
-        branches!inner (location)
-      `)
-      .eq('branches.location', zhProfile.location);
+        branch_id
+      `);
 
     if (visitsError) throw visitsError;
 
@@ -185,11 +150,15 @@ export async function fetchDashboardStats(userId: string) {
       completedVisits: currentMonthVisits?.filter(v => v.status === 'approved').length || 0,
     };
 
+    // Count unique visited branches
+    const uniqueVisitedBranches = new Set((visits || []).map(visit => visit.branch_id));
+
     return {
       totalBranches: totalBranches || 0,
       totalBHRs: totalBHRs || 0,
       visitStats,
       monthlyStats,
+      visitedBranches: uniqueVisitedBranches.size || 0,
     };
   } catch (error) {
     console.error("Error fetching dashboard stats:", error);
@@ -258,7 +227,8 @@ export async function unassignBranchFromBHR(bhUserId: string, branchId: string) 
       variant: "destructive",
       title: "Failed to remove assignment",
       description: error.message || "An unexpected error occurred."
-    });
+      });
+    
     throw error;
   }
 }
