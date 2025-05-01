@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
-import { fetchDashboardStats, fetchBranchCategoryStats, fetchMonthlyTrends, fetchTopPerformers } from "@/services/chService";
+import { 
+  fetchDashboardStats, 
+  fetchBranchCategoryStats, 
+  fetchMonthlyTrends, 
+  fetchTopPerformers 
+} from "@/services/chService";
 import { Building, CheckCircle, PieChart, Users, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
