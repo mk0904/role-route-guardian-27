@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { Database } from "@/integrations/supabase/types";
@@ -55,7 +56,7 @@ export async function fetchZoneBranches(userId: string): Promise<BranchWithAssig
 export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
     try {
       console.log("Fetching all BH users...");
-      // Get all BH users without location filtering
+      // Get all BH users without location filtering - use eq('role', 'BH') case-sensitive match
       const { data: bhUsers, error: bhError } = await supabase
         .from('profiles')
         .select('*')
@@ -69,7 +70,7 @@ export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
       console.log(`Fetched ${bhUsers?.length || 0} BH users`);
       
       // Get branch assignments for these users in a separate query
-      const bhUserIds = bhUsers.map(user => user.id);
+      const bhUserIds = bhUsers?.map(user => user.id) || [];
       
       // Only proceed if we have users
       if (bhUserIds.length === 0) {
@@ -99,13 +100,13 @@ export async function fetchZoneBHRs(userId: string): Promise<BHRUser[]> {
       });
       
       // Process the data to count branches per BH
-      const processedBHRs = bhUsers.map(user => {
+      const processedBHRs = bhUsers?.map(user => {
         const branchIds = assignmentsByUser[user.id] || [];
         return {
           ...user,
           branches_assigned: branchIds.length
         };
-      });
+      }) || [];
   
       console.log(`Processed ${processedBHRs.length} BHRs with assignment counts`);
       return processedBHRs as BHRUser[];

@@ -351,7 +351,7 @@ export async function fetchLocationCoverage() {
   try {
     const { data: branches, error: branchError } = await supabase
       .from('branches')
-      .select('location');
+      .select('id, location');
 
     if (branchError) {
       console.error("Error fetching branches:", branchError);

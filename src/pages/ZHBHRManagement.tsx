@@ -34,7 +34,7 @@ const ZHBHRManagement = () => {
     queryFn: async () => {
       try {
         console.log("Fetching BHR users");
-        // Get all BH users without location filtering
+        // Get all BH users without location filtering - fixed to match case-sensitive 'BH'
         const { data: bhUsers, error: bhError } = await supabase
           .from('profiles')
           .select('id, full_name, e_code, location')
@@ -50,7 +50,7 @@ const ZHBHRManagement = () => {
           throw bhError;
         }
 
-        console.log("BH users fetched:", bhUsers?.length || 0);
+        console.log("BH users fetched:", bhUsers?.length || 0, bhUsers);
         
         if (!bhUsers || bhUsers.length === 0) {
           return [];
