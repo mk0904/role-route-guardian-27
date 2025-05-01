@@ -12,13 +12,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
-      <main className="flex-1 flex flex-col items-center justify-center p-6">
-        <div className="max-w-3xl w-full text-center space-y-8">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:p-6">
+        <div className="max-w-3xl w-full text-center space-y-6 sm:space-y-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
             Role-Based Access Control System
           </h1>
           
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto">
             Secure, efficient, and customized access management for your organization
           </p>
           
@@ -26,13 +26,13 @@ const Index = () => {
             <Button 
               size="lg"
               onClick={handleGetStarted}
-              className="text-lg px-8 py-6 bg-blue-600 hover:bg-blue-700"
+              className="text-base sm:text-lg px-6 py-5 sm:px-8 sm:py-6 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
             >
               Get Started
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8 pt-6 sm:pt-12">
             {[
               {
                 title: "Role-Based Access",
@@ -49,9 +49,9 @@ const Index = () => {
             ].map((feature, i) => (
               <div 
                 key={i}
-                className="bg-white p-6 rounded-lg shadow-md border border-slate-200 text-left"
+                className="bg-white p-4 sm:p-6 rounded-lg shadow-md border border-slate-200 text-left"
               >
-                <h3 className="text-xl font-semibold mb-3 text-slate-800">{feature.title}</h3>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-slate-800">{feature.title}</h3>
                 <p className="text-slate-600">{feature.description}</p>
               </div>
             ))}
@@ -59,8 +59,8 @@ const Index = () => {
         </div>
       </main>
       
-      <footer className="py-6 border-t border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 text-center text-slate-500 text-sm">
+      <footer className="py-4 sm:py-6 border-t border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 text-center text-slate-500 text-sm">
           &copy; {new Date().getFullYear()} Role Route Guardian. All rights reserved.
         </div>
       </footer>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { LayoutDashboard, Plus, List, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, Plus, List, Menu, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,31 +55,31 @@ const BHDashboardLayout = () => {
     return (
       <div className="flex flex-col min-h-screen bg-slate-50">
         {/* Mobile header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between px-4 h-14 bg-white border-b shadow-sm">
+        <header className="sticky top-0 z-50 flex items-center justify-between px-4 h-14 bg-white border-b shadow-sm">
           <div className="flex items-center gap-3">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
+                <Button variant="ghost" size="sm" className="md:hidden">
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-64">
+              <SheetContent side="left" className="p-0 w-[80%] max-w-[280px]">
                 <div className="flex flex-col h-full">
-                  {/* Mobile menu header - reduced height, removed duplicate close button */}
+                  {/* Mobile menu header */}
                   <div className="h-14 px-4 border-b flex items-center">
                     <h2 className="text-lg font-semibold flex-1">HDFC App</h2>
                   </div>
                   
                   {/* Mobile menu items */}
-                  <div className="flex-1 px-2 py-4">
+                  <div className="flex-1 px-2 py-4 overflow-y-auto">
                     <nav className="space-y-1">
                       {menuItems.map((item) => (
                         <NavLink
                           key={item.path}
                           to={item.path}
                           className={({ isActive }) => cn(
-                            "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                            "flex items-center px-3 py-3 rounded-md text-sm font-medium transition-colors",
                             isActive 
                               ? "bg-blue-50 text-blue-700" 
                               : "text-gray-700 hover:bg-gray-100"
@@ -145,7 +145,7 @@ const BHDashboardLayout = () => {
           )}
         </div>
         
-        <nav className="flex-1 mt-6">
+        <nav className="flex-1 mt-6 overflow-y-auto">
           <ul className="px-2 space-y-2">
             {menuItems.map((item) => (
               <li key={item.path}>

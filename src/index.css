@@ -98,4 +98,21 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .container-responsive {
+    @apply w-full px-4 sm:px-6 lg:px-8 mx-auto;
+    max-width: 1400px;
+  }
+
+  .form-layout {
+    @apply max-w-md mx-auto w-full sm:px-0 px-4;
+  }
+
+  .card-mobile {
+    @apply p-4 sm:p-6;
+  }
+
+  .btn-mobile {
+    @apply w-full sm:w-auto;
+  }
 }
